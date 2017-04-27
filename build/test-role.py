@@ -57,12 +57,6 @@ class ContainerManager:
         print("Network attributes: {}\n".format(target.attrs['NetworkSettings']['Ports']))
         return { 'host': container }
 
-    def start_detached(self, image):
-        return self._start(image, detached=True, publish_ports=True)
-
-    def start_attached(self, image):
-        self._start(image)
-
     def _start(self, image, detached=False, publish_ports=False):
         try:
             print("Starting container with image {} on network {}".format(image, self.docker_network.name))
@@ -84,6 +78,12 @@ class ContainerManager:
         except docker.errors.APIError as err:
             print("Docker API Error:\n {}".format(err))
             sys.exit(1)
+
+    def start_detached(self, image):
+        return self._start(image, detached=True, publish_ports=True)
+
+    def start_attached(self, image):
+        self._start(image)
 
     def cleanup(self):
         try:
