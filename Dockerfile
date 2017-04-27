@@ -14,9 +14,10 @@ RUN apk add --no-cache \
     mv docker/docker /usr/local/bin && \
     rm -rf docker $DOCKER_ARCHIVE_FILENAME
 
-ADD scripts/test-role.py /usr/local/bin/test-role
 ADD build/requirements.pip requirements.pip
 RUN pip3 install -r requirements.pip
+
+ADD build/test-role.py /usr/local/bin/test-role
 
 WORKDIR /test
 
