@@ -2,6 +2,7 @@
 
 import docker
 import sys
+import uuid
 import yaml
 
 class YamlFileLoader:
@@ -29,16 +30,17 @@ class ContainerManager:
         self._ensure_network_exists(docker_network_id)
 
     def __del__(self):
+        print("")
         self.cleanup()
         self._cleanup_networks()
 
     def _ensure_network_exists(self, docker_network_id):
         try:
-            existing_networks = self.docker_client.networks.list()
+            existing_networks = list(map(lambda x: x.name, self.docker_client.networks.list()))
             if (docker_network_id) not in existing_networks:
                 self.docker_network = self.docker_client.networks.create(docker_network_id)
             else:
-                self.docker_network = self.docker_client.network.get(docker_network_id)
+                self.docker_network = self.docker_client.networks.get(docker_network_id)
         except docker.errors.APIError as err:
             print("Docker API Error:\n {}".format(err))
             sys.exit(1)
@@ -52,16 +54,15 @@ class ContainerManager:
             print("Docker API Error:\n {}".format(err))
             sys.exit(1)
 
-    def _create_container_metadata(container):
-
-        print("Network attributes: {}\n".format(target.attrs['NetworkSettings']['Ports']))
-        return { 'host': container }
+    def _generateContainerName(self):
+        return "{}-{}".format(self.docker_network.name, uuid.uuid4())
 
     def _start(self, image, detached=False, publish_ports=False):
         try:
             print("Starting container with image {} on network {}".format(image, self.docker_network.name))
             container = self.docker_client.containers.run(
                 image,
+                name=self._generateContainerName(),
                 detach=detached,
                 publish_all_ports=publish_ports,
                 networks=[self.docker_network.name])
@@ -70,6 +71,8 @@ class ContainerManager:
 
             # explicitly connect container to network to get around this bug: https://github.com/docker/docker-py/issues/1562
             self.docker_network.connect(container)
+            default_network = self.docker_client.networks.get('bridge')
+            default_network.disconnect(container)
 
             # reload container to get port metadata
             container.reload()
@@ -115,8 +118,7 @@ class AnsibleManager:
         "lindeboomio/ansible-alpine:{}".format(ansible_version)
 
     def run(self, target, test_playbook):
-        # self.container_manager.start(
-        print("Should run the playbook {} now on target {}".format(test_playbook, target.name))
+        print("Should run the playbook {} now on target {}".format(test_playbook, target.id))
 
 class RoleTester:
     ansible_version = "2.3.0.0"
