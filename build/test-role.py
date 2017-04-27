@@ -26,32 +26,59 @@ class ContainerManager:
         self.docker_client = docker_client
         self.managed_containers = []
 
-        self.ensure_network_exists(docker_network_id)
+        self._ensure_network_exists(docker_network_id)
 
     def __del__(self):
-        self.cleanup_networks()
+        self.cleanup()
+        self._cleanup_networks()
 
-    def ensure_network_exists(self, docker_network_id):
+    def _ensure_network_exists(self, docker_network_id):
         try:
             existing_networks = self.docker_client.networks.list()
             if (docker_network_id) not in existing_networks:
                 self.docker_network = self.docker_client.networks.create(docker_network_id)
+            else:
+                self.docker_network = self.docker_client.network.get(docker_network_id)
         except docker.errors.APIError as err:
             print("Docker API Error:\n {}".format(err))
             sys.exit(1)
 
-    def cleanup_networks(self):
+    def _cleanup_networks(self):
         try:
             if (self.docker_network):
+                print("Cleaning up network {}".format(self.docker_network.name))
                 self.docker_network.remove()
         except docker.errors.APIError as err:
             print("Docker API Error:\n {}".format(err))
             sys.exit(1)
 
-    def start(self, image):
+    def _create_container_metadata(container):
+
+        print("Network attributes: {}\n".format(target.attrs['NetworkSettings']['Ports']))
+        return { 'host': container }
+
+    def start_detached(self, image):
+        return self._start(image, detached=True, publish_ports=True)
+
+    def start_attached(self, image):
+        self._start(image)
+
+    def _start(self, image, detached=False, publish_ports=False):
         try:
-            container = self.docker_client.containers.run(image, detach=True, publish_all_ports=True, networks=[self.docker_network.name])
+            print("Starting container with image {} on network {}".format(image, self.docker_network.name))
+            container = self.docker_client.containers.run(
+                image,
+                detach=detached,
+                publish_all_ports=publish_ports,
+                networks=[self.docker_network.name])
+
             self.managed_containers.append(container)
+
+            # explicitly connect container to network to get around this bug: https://github.com/docker/docker-py/issues/1562
+            self.docker_network.connect(container)
+
+            # reload container to get port metadata
+            container.reload()
 
             return container
         except docker.errors.APIError as err:
@@ -74,7 +101,7 @@ class TargetManager:
         self.container_manager = container_manager
 
     def start(self, target_image):
-        return self.container_manager.start(target_image)
+        return self.container_manager.start_detached(target_image)
 
     def cleanup(self):
         self.container_manager.cleanup()
@@ -84,30 +111,33 @@ class AnsibleManager:
     def __init__(self, container_manager):
         self.container_manager = container_manager
 
-    def get_ansible(ansible_version):
+    def _get_ansible(ansible_version):
         "lindeboomio/ansible-alpine:{}".format(ansible_version)
+
+    def run(self, target, test_playbook):
+        # self.container_manager.start(
+        print("Should run the playbook {} now on target {}".format(test_playbook, target.name))
 
 class RoleTester:
     ansible_version = "2.3.0.0"
-    test_location = "test/test.yml"
 
     def __init__(self, ansible_manager, target_manager):
         self.ansible_manager = ansible_manager
         self.target_manager = target_manager
 
-    def bundle_config(self, testconfig):
+    def _bundle_config(self, testconfig):
         return list(map(
-            lambda x: { 'target_image': x, 'test_location': self.test_location },
+            lambda x: { 'target_image': x, 'test_playbook': testconfig['test_playbook'] },
             testconfig['targets']))
 
     def test_roles(self, testconfig):
-        bundled_config = self.bundle_config(testconfig)
+        bundled_config = self._bundle_config(testconfig)
 
         for scenario in bundled_config:
             print("Preparing test target {}".format(scenario['target_image']))
-            self.target_manager.start(scenario['target_image'])
+            target = self.target_manager.start(scenario['target_image'])
 
-            # self.ansible_manager.run( ansible_version)
+            self.ansible_manager.run(target, scenario['test_playbook'])
 
             # self.target_manager.cleanup()
 
