@@ -8,14 +8,15 @@ WORKDIR /tmp
 
 RUN apk add --no-cache \
         curl \
-        python3 \
-        py-yaml && \
+        python3 && \
     curl -O ${DOCKER_DOWNLOAD_URL} && \
     tar xzf ${DOCKER_ARCHIVE_FILENAME} docker/docker && \
     mv docker/docker /usr/local/bin && \
     rm -rf docker $DOCKER_ARCHIVE_FILENAME
 
 ADD scripts/test-role.py /usr/local/bin/test-role
+ADD build/requirements.pip requirements.pip
+RUN pip3 install -r requirements.pip
 
 WORKDIR /test
 
