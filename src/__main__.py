@@ -1,6 +1,8 @@
 import docker
 import support
 
+from roletester import RoleTester
+
 def main():
     config_path = "testconfig.yml"
     container_network_id = 'role_tester_network'
@@ -9,7 +11,7 @@ def main():
         docker_client = docker.from_env(),
         container_network_id = container_network_id)
 
-    role_tester = support.RoleTester(
+    role_tester = RoleTester(
         support.KeyGenerator(container_manager),
         support.AnsibleManager(container_manager),
         support.TargetManager(container_manager))
