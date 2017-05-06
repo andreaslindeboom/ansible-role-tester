@@ -37,13 +37,13 @@ class ContainerManager:
     def _generateContainerName(self):
         return "{}-{}".format(self.docker_network.name, uuid.uuid4())
 
-    def _start(self, image, detached=False, publish_ports=False, volumes={}, command=None):
+    def start(self, image, publish_ports=False, volumes={}, command=None):
         try:
             print("Starting container with image {} on network {}".format(image, self.docker_network.name))
             container = self.docker_client.containers.run(
                 image,
                 name=self._generateContainerName(),
-                detach=detached,
+                detach=True,
                 publish_all_ports=publish_ports,
                 networks=[self.docker_network.name],
                 volumes = dict(map(lambda paths: (paths[0], {'bind': paths[1], 'ro': False}), volumes.items())),
@@ -67,12 +67,6 @@ class ContainerManager:
         except docker.errors.ContainerError as err:
             print("Docker Container Error:\n {}".format(err))
             sys.exit(1)
-
-    def start_detached(self, image, publish_ports=False, volumes={}, command=None):
-        return self._start(image, detached = True, publish_ports = True, volumes = volumes, command = command)
-
-    def start_attached(self, image, publish_ports=False, volumes={}, command=None):
-        self._start(image, publish_ports = publish_ports, volumes = volumes, command = command)
 
     def cleanup(self):
         try:

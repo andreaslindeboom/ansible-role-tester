@@ -1,5 +1,3 @@
-import os
-
 class KeyGenerator:
     keygen_version = "0.1.0"
 
@@ -7,8 +5,8 @@ class KeyGenerator:
         self.container_manager = container_manager
 
     def generate_keypair(self, directory):
-        self.container_manager.start_attached(
+        self.container_manager.start(
             'lindeboomio/openssh-keygen-alpine:{}'.format(self.keygen_version),
-            volumes = dict([(os.getcwd(), '/keys')]),
+            volumes = dict([('/keys/', '/keys/')]),
             command = "-t rsa -b 2048 -P '' -f ansible")
 
