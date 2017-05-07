@@ -1,4 +1,5 @@
 import docker
+import re
 import sys
 import uuid
 
@@ -6,6 +7,7 @@ class ContainerManager:
     def __init__(self, docker_client, container_network_id):
         self.docker_client = docker_client
         self.managed_containers = []
+        self.managed_volumes = []
 
         self._ensure_network_exists(container_network_id)
 
@@ -37,6 +39,20 @@ class ContainerManager:
     def _generateContainerName(self):
         return "{}-{}".format(self.docker_network.name, uuid.uuid4())
 
+    def _generateVolumes(self, volume_specifications):
+        try:
+            for volume_specification in volume_specifications.items():
+                local_path = volume_specification[0]
+                if re.match('[a-zA-Z0-9][a-zA-Z0-9_.-]', local_path) and local_path not in self.docker_client.volumes.list():
+                    print ("Creating volume {}".format(local_path))
+                    volume = self.docker_client.volumes.create(local_path)
+                    self.managed_volumes.append(volume)
+        except docker.errors.APIError as err:
+            print("Docker API Error:\n {}".format(err))
+            sys.exit(1)
+
+        return dict(map(lambda paths: (paths[0], {'bind': paths[1], 'ro': False}), volume_specifications.items()))
+
     def start(self, image, publish_ports=False, volumes={}, command=None):
         try:
             print("Starting container with image {} on network {}".format(image, self.docker_network.name))
@@ -46,7 +62,7 @@ class ContainerManager:
                 detach=True,
                 publish_all_ports=publish_ports,
                 networks=[self.docker_network.name],
-                volumes = dict(map(lambda paths: (paths[0], {'bind': paths[1], 'ro': False}), volumes.items())),
+                volumes = self._generateVolumes(volumes),
                 command = command
             )
 
@@ -70,11 +86,14 @@ class ContainerManager:
 
     def cleanup(self):
         try:
-            while self.managed_containers:
-                container = self.managed_containers.pop()
-
+            for container in self.managed_containers:
                 print("Cleaning up container {}".format(container.id))
                 container.remove(force=True)
+
+            for volume in self.managed_volumes:
+                print("Cleaning up volume {}".format(volume.id))
+                volume.remove()
+
         except docker.errors.APIError as err:
             print("Docker API Error:\n {}".format(err))
             sys.exit(1)
