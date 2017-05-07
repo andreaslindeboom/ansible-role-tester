@@ -11,7 +11,7 @@ class RoleTester:
 
     def test_roles(self, testconfig):
         print("--- General preparation ---")
-        self.key_generator.generate_keypair('foo')
+        self.key_generator.generate_keypair('ansible')
         bundled_config = self._bundle_config(testconfig)
 
         print("\n--- Target preparation ---")
