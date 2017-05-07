@@ -13,7 +13,7 @@ class ContainerManager:
 
     def __del__(self):
         print("\n--- Container cleanup ---")
-        self.cleanup()
+        self._cleanup()
         self._cleanup_networks()
 
     def _ensure_network_exists(self, docker_network_id):
@@ -23,6 +23,20 @@ class ContainerManager:
                 self.docker_network = self.docker_client.networks.create(docker_network_id)
             else:
                 self.docker_network = self.docker_client.networks.get(docker_network_id)
+        except docker.errors.APIError as err:
+            print("Docker API Error:\n {}".format(err))
+            sys.exit(1)
+
+    def _cleanup(self):
+        try:
+            for container in self.managed_containers:
+                print("Cleaning up container {}".format(container.id))
+                container.remove(force=True)
+
+            for volume in self.managed_volumes:
+                print("Cleaning up volume {}".format(volume.id))
+                volume.remove()
+
         except docker.errors.APIError as err:
             print("Docker API Error:\n {}".format(err))
             sys.exit(1)
@@ -86,19 +100,5 @@ class ContainerManager:
             sys.exit(1)
         except docker.errors.ContainerError as err:
             print("Docker Container Error:\n {}".format(err))
-            sys.exit(1)
-
-    def cleanup(self):
-        try:
-            for container in self.managed_containers:
-                print("Cleaning up container {}".format(container.id))
-                container.remove(force=True)
-
-            for volume in self.managed_volumes:
-                print("Cleaning up volume {}".format(volume.id))
-                volume.remove()
-
-        except docker.errors.APIError as err:
-            print("Docker API Error:\n {}".format(err))
             sys.exit(1)
 
