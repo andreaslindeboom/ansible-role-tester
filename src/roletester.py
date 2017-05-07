@@ -6,7 +6,7 @@ class RoleTester:
 
     def _bundle_config(self, testconfig):
         return list(map(
-            lambda x: { 'target_image': x, 'test_playbook': testconfig['test_playbook'] },
+            lambda x: { 'target': x, 'playbook': testconfig['playbook'] },
             testconfig['targets']))
 
     def test_roles(self, testconfig):
@@ -16,10 +16,7 @@ class RoleTester:
 
         print("\n--- Target preparation ---")
         for scenario in bundled_config:
-            print("Preparing test target {}".format(scenario['target_image']))
-            target = self.target_manager.start(scenario['target_image'])
+            print("Preparing test target {}".format(scenario['target']))
+            # self.ansible_manager.run(target, scenario['playbook'])
 
-            self.ansible_manager.run(target, scenario['test_playbook'])
-
-            # self.target_manager.cleanup()
-
+            target = self.target_manager.start(scenario['target'])
