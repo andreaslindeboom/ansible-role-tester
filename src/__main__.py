@@ -18,8 +18,8 @@ def main():
 
     role_tester = RoleTester(
         key_manager,
-        AnsibleManager(container_manager, key_manager),
-        TargetManager(container_manager, key_manager))
+        AnsibleManager(container_manager),
+        TargetManager(container_manager))
 
     test_config = YamlFileLoader.load_yaml(config_path)
 
