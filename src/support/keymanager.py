@@ -1,4 +1,5 @@
 import os
+import sys
 
 class KeyManager:
     keygen_version = "0.1.1"
@@ -21,6 +22,16 @@ class KeyManager:
             volumes = dict([('keys', '/keys')]),
             command = "-t rsa -b 2048 -P '' -f {}".format(self.key_name))
 
+        try:
+            with open('/keys/{}'.format(self.key_name), 'r') as key_file:
+                self.key = key_file.read().strip('\n\r')
+
+            with open('/keys/{}.pub'.format(self.key_name), 'r') as pubkey_file:
+                self.pubkey = pubkey_file.read().strip('\n\r')
+        except IOError:
+            print("Could not read key file")
+            sys.exit(1)
+
     def _cleanup(self):
         key_files = os.listdir("/keys")
         for key in key_files:
@@ -29,3 +40,5 @@ class KeyManager:
                 print("Cleaning up {}".format(file_path))
                 os.unlink(file_path)
 
+    def get_pubkey(self):
+        return self.pubkey

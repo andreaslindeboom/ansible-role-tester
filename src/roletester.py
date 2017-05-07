@@ -13,11 +13,12 @@ class RoleTester:
 
     def test_roles(self, testconfig):
         bundled_config = self._bundle_config(testconfig)
+        authorized_key = self.key_manager.get_pubkey()
 
         print("\n--- Target preparation ---")
         for scenario in bundled_config:
             print("Preparing test target {}".format(scenario['target']))
-            target = self.target_manager.start(scenario['target'])
+            target = self.target_manager.start(scenario['target'], authorized_key)
             self.active_targets.append(target)
 
         print("\n--- Test execution ---")
