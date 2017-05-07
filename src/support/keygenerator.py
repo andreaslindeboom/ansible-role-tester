@@ -8,5 +8,5 @@ class KeyGenerator:
         self.container_manager.start(
             'lindeboomio/openssh-keygen-alpine:{}'.format(self.keygen_version),
             volumes = dict([('keys', '/keys')]),
-            command = "-t rsa -b 2048 -P '' -f ansible")
+            command = "-t rsa -b 2048 -P '' -f {}".format(filename))
 
