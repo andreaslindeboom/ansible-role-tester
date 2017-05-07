@@ -6,21 +6,14 @@ class RoleTester:
         self.ansible_manager = ansible_manager
         self.target_manager = target_manager
 
-    def _bundle_config(self, testconfig):
-        return list(map(
-            lambda x: { 'target': x, 'playbook': testconfig['playbook'] },
-            testconfig['targets']))
-
     def test_roles(self, testconfig):
-        bundled_config = self._bundle_config(testconfig)
         authorized_key = self.key_manager.get_pubkey()
 
         print("\n--- Target preparation ---")
-        for scenario in bundled_config:
-            print("Preparing test target {}".format(scenario['target']))
-            target = self.target_manager.start(scenario['target'], authorized_key)
-            self.active_targets.append(target)
+        for target in testconfig['targets']:
+            print("Preparing test target {}".format(target))
+            running_target = self.target_manager.start(target, authorized_key)
+            self.active_targets.append(running_target)
 
         print("\n--- Test execution ---")
-        for scenario in bundled_config:
-            self.ansible_manager.run(target, scenario['playbook'])
+        self.ansible_manager.run(self.active_targets, testconfig['ansible']['playbook'], testconfig['ansible']['user'])
