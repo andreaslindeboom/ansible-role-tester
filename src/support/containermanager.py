@@ -3,16 +3,18 @@ import sys
 import uuid
 
 class ContainerManager:
-    def __init__(self, docker_client, container_network_id):
+    def __init__(self, docker_client, container_network_id, cleanup = True):
         self.docker_client = docker_client
         self.managed_containers = []
+        self.cleanup = cleanup
 
         self._ensure_network_exists(container_network_id)
 
     def __del__(self):
-        print("\n--- Container cleanup ---")
-        self._cleanup()
-        self._cleanup_networks()
+        if self.cleanup:
+            print("\n--- Container cleanup ---")
+            self._cleanup()
+            self._cleanup_networks()
 
     def _ensure_network_exists(self, docker_network_id):
         try:

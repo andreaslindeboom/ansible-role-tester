@@ -12,9 +12,13 @@ def main():
 
     container_manager = ContainerManager(
         docker_client = docker.from_env(),
-        container_network_id = container_network_id)
+        container_network_id = container_network_id,
+        cleanup = False)
 
-    key_manager = KeyManager(container_manager, key_name)
+    key_manager = KeyManager(
+        container_manager,
+        key_name,
+        cleanup = False)
 
     role_tester = RoleTester(
         key_manager,
