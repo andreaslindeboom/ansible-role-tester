@@ -1,21 +1,23 @@
 import os
 
-class KeyGenerator:
+class KeyManager:
     keygen_version = "0.1.1"
 
-    def __init__(self, container_manager):
+    def __init__(self, container_manager, key_name):
         self.container_manager = container_manager
+        self.key_name = key_name
+        self._generate_keypair()
 
     def __del__(self):
         print("\n--- Key cleanup ---")
         self._cleanup()
 
-    def generate_keypair(self, filename):
+    def _generate_keypair(self):
         print("Generating keypair to enable Ansible to access target over SSH")
         self.container_manager.start(
             'lindeboomio/openssh-keygen-alpine:{}'.format(self.keygen_version),
             volumes = dict([('keys', '/keys')]),
-            command = "-t rsa -b 2048 -P '' -f {}".format(filename))
+            command = "-t rsa -b 2048 -P '' -f {}".format(self.key_name))
 
     def _cleanup(self):
         key_files = os.listdir("/keys")
