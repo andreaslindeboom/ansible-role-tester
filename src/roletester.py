@@ -10,9 +10,11 @@ class RoleTester:
             testconfig['targets']))
 
     def test_roles(self, testconfig):
+        print("--- Key generation ---")
         self.key_generator.generate_keypair('foo')
         bundled_config = self._bundle_config(testconfig)
 
+        print("\n--- Target preparation ---")
         for scenario in bundled_config:
             print("Preparing test target {}".format(scenario['target_image']))
             target = self.target_manager.start(scenario['target_image'])

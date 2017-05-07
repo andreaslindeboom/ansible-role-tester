@@ -12,7 +12,7 @@ class ContainerManager:
         self._ensure_network_exists(container_network_id)
 
     def __del__(self):
-        print("")
+        print("\n--- Container cleanup ---")
         self.cleanup()
         self._cleanup_networks()
 
