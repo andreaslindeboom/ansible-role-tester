@@ -43,10 +43,14 @@ class ContainerManager:
         try:
             for volume_specification in volume_specifications.items():
                 local_path = volume_specification[0]
-                if re.match('[a-zA-Z0-9][a-zA-Z0-9_.-]', local_path) and local_path not in self.docker_client.volumes.list():
-                    print ("Creating volume {}".format(local_path))
-                    volume = self.docker_client.volumes.create(local_path)
-                    self.managed_volumes.append(volume)
+                existing_volumes = list(map(lambda x: x.name, self.docker_client.volumes.list()))
+                if re.match('[a-zA-Z0-9][a-zA-Z0-9_.-]', local_path):
+                    if local_path not in existing_volumes:
+                        print ("Creating volume {}".format(local_path))
+                        volume = self.docker_client.volumes.create(local_path)
+                        self.managed_volumes.append(volume)
+                    else:
+                        print("Skipping creation of existing volume {}".format(local_path))
         except docker.errors.APIError as err:
             print("Docker API Error:\n {}".format(err))
             sys.exit(1)
