@@ -6,17 +6,18 @@ ENV DOCKER_DOWNLOAD_URL=https://get.docker.com/builds/Linux/x86_64/${DOCKER_ARCH
 
 WORKDIR /tmp
 
+ADD requirements.pip ./
+
 RUN apk add --no-cache \
         curl \
         python3 && \
     curl -O ${DOCKER_DOWNLOAD_URL} && \
     tar xzf ${DOCKER_ARCHIVE_FILENAME} docker/docker && \
     mv docker/docker /usr/local/bin && \
-    rm -rf docker $DOCKER_ARCHIVE_FILENAME
+    rm -rf docker $DOCKER_ARCHIVE_FILENAME && \
+    pip3 install -r requirements.pip
 
 ADD src/ src/
-
-RUN pip3 install -r src/requirements.pip
 
 WORKDIR /test
 
