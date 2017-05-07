@@ -49,7 +49,7 @@ class ContainerManager:
     def _generateContainerName(self):
         return "{}-{}".format(self.docker_network.name, uuid.uuid4())
 
-    def start(self, image, publish_ports=False, volumes={}, command=None):
+    def start(self, image, publish_ports=False, volumes={}, command=None, environment={}):
         try:
             print("Starting container with image {} on network {}".format(image, self.docker_network.name))
             container = self.docker_client.containers.run(
@@ -58,6 +58,7 @@ class ContainerManager:
                 detach=True,
                 publish_all_ports=publish_ports,
                 networks=[self.docker_network.name],
+                environment=environment,
                 volumes = dict(map(lambda paths: (paths[0], {'bind': paths[1], 'ro': False}), volumes.items())),
                 command = command
             )
