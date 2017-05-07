@@ -5,6 +5,7 @@ class KeyGenerator:
         self.container_manager = container_manager
 
     def generate_keypair(self, filename):
+        print("Generating keypair to enable Ansible to access target over SSH")
         self.container_manager.start(
             'lindeboomio/openssh-keygen-alpine:{}'.format(self.keygen_version),
             volumes = dict([('keys', '/keys')]),

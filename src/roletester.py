@@ -10,7 +10,7 @@ class RoleTester:
             testconfig['targets']))
 
     def test_roles(self, testconfig):
-        print("--- Key generation ---")
+        print("--- General preparation ---")
         self.key_generator.generate_keypair('foo')
         bundled_config = self._bundle_config(testconfig)
 
