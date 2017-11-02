@@ -1,0 +1,7 @@
+ansible:
+    playbook: test/test.yml
+    user: ansible
+
+targets:
+    - lindeboomio/ansible-test-target-alpine:development
+

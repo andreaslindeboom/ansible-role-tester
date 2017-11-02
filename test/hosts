@@ -1,0 +1,4 @@
+[targets]
+role_tester_network-add671a2-aad4-4277-a092-aa75b21f1a94 ansible_user=ansible
+[targets:vars]
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
